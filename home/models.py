@@ -1,8 +1,11 @@
+from pathlib import PurePath
 from django.db import models
 from wagtail.core.models import Page
 from wagtail.images.models import Image, AbstractImage, AbstractRendition
 from wagtail.core.fields import RichTextField
 from wagtail.admin.edit_handlers import FieldPanel
+
+from .utils import get_collection_path
 
 
 class CustomImage(AbstractImage):
@@ -15,6 +18,13 @@ class CustomImage(AbstractImage):
         'caption',
         'alt',
     )
+
+    def get_upload_to(self, filename):
+        # This function gets called by wagtail.images.models.get_upload_to().
+        original_path = super().get_upload_to(filename)
+        # Put the image into a folder named for this image's collection.
+        amended_path = PurePath(get_collection_path(self.collection), original_path)
+        return str(amended_path)
 
     @property
     def default_alt_text(self):
