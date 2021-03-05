@@ -1,5 +1,6 @@
 from pathlib import PurePath
 from django.db import models
+from wagtail.api import APIField
 from wagtail.admin.edit_handlers import FieldPanel, StreamFieldPanel
 from wagtail.core import blocks
 from wagtail.core.fields import RichTextField, StreamField
@@ -9,6 +10,7 @@ from wagtail.images.blocks import ImageChooserBlock
 from wagtail.images.models import Image, AbstractImage, AbstractRendition
 
 from .utils import get_collection_path
+from .api import RenderedRichTextField
 
 
 class CustomImage(AbstractImage):
@@ -22,12 +24,14 @@ class CustomImage(AbstractImage):
         'alt',
     )
 
-    def get_upload_to(self, filename):
-        # This function gets called by wagtail.images.models.get_upload_to().
-        original_path = super().get_upload_to(filename)
-        # Put the image into a folder named for this image's collection.
-        amended_path = PurePath(get_collection_path(self.collection), original_path)
-        return str(amended_path)
+    # Uncomment this when we need to demonstrate broken behavior moving images from UploadedImages
+    #
+    # def get_upload_to(self, filename):
+    #     # This function gets called by wagtail.images.models.get_upload_to().
+    #     original_path = super().get_upload_to(filename)
+    #     # Put the image into a folder named for this image's collection.
+    #     amended_path = PurePath(get_collection_path(self.collection), original_path)
+    #     return str(amended_path)
 
     @property
     def default_alt_text(self):
@@ -57,4 +61,9 @@ class HomePage(Page):
     content_panels = Page.content_panels + [
         FieldPanel('intro', classname="full"),
         StreamFieldPanel('body', classname="full"),
+    ]
+
+    api_fields = [
+        APIField('intro', serializer=RenderedRichTextField()),
+        'body',
     ]
