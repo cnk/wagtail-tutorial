@@ -1,12 +1,12 @@
 from pathlib import PurePath
 from django.db import models
-from wagtail.core.models import Page
-from wagtail.images.models import Image, AbstractImage, AbstractRendition
+from wagtail.admin.edit_handlers import FieldPanel, StreamFieldPanel
 from wagtail.core import blocks
-from wagtail.core.fields import StreamField
-from wagtail.admin.edit_handlers import StreamFieldPanel
+from wagtail.core.fields import RichTextField, StreamField
+from wagtail.core.models import Page
 from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.images.blocks import ImageChooserBlock
+from wagtail.images.models import Image, AbstractImage, AbstractRendition
 
 from .utils import get_collection_path
 
@@ -46,6 +46,7 @@ class CustomRendition(AbstractRendition):
 
 
 class HomePage(Page):
+    intro = RichTextField(blank=True)
     body = StreamField([
         ('heading', blocks.CharBlock(form_classname="full title")),
         ('paragraph', blocks.RichTextBlock()),
@@ -54,5 +55,6 @@ class HomePage(Page):
     ])
 
     content_panels = Page.content_panels + [
+        FieldPanel('intro', classname="full"),
         StreamFieldPanel('body', classname="full"),
     ]
