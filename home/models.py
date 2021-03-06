@@ -1,6 +1,5 @@
 from pathlib import PurePath
 from django.db import models
-from wagtail.api import APIField
 from wagtail.admin.edit_handlers import FieldPanel, StreamFieldPanel
 from wagtail.core import blocks
 from wagtail.core.fields import RichTextField, StreamField
@@ -10,7 +9,6 @@ from wagtail.images.blocks import ImageChooserBlock
 from wagtail.images.models import Image, AbstractImage, AbstractRendition
 
 from .utils import get_collection_path
-from .api import RenderedRichTextField
 
 
 class CustomImage(AbstractImage):
@@ -63,7 +61,4 @@ class HomePage(Page):
         StreamFieldPanel('body', classname="full"),
     ]
 
-    api_fields = [
-        APIField('intro', serializer=RenderedRichTextField()),
-        'body',
-    ]
+    api_fields = ['intro', 'body', ]

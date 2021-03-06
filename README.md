@@ -67,11 +67,11 @@ correct collection when the full form is saved a few lines later. This [pull
 request](https://github.com/wagtail/wagtail/pull/6717) should fix the issue.
 
 
-## Round 2: Convert RichText to html in API
+## Round 2: Convert RichText to html in APIv2
 
 The default API rendering of a RichTextField is the representation stored in the
 database. This means that internal links to pages, images, and documents have
-references to their ids, rather than urls to the assets themselves. 
+references to their ids, rather than urls to the assets themselves.
 
 ```html
 "value": "<p>This is a test. Same url, in a paragraph in a StreamField. If we only customize per field, <a id=\"5\" linktype=\"page\">this</a> will still have linktype in the API output.</p><p>Image inside a RichText field in side a StreamField:</p><embed alt=\"Half a dozen men holding a shiney blump-like balloon by lines\" embedtype=\"image\" format=\"left\" id=\"2\"/>"
@@ -80,12 +80,12 @@ references to their ids, rather than urls to the assets themselves.
 In some circumstances (such as using the API in a mobile app), this may be what
 you want, so you can use the API to retrieve the image. But in many
 circumstances, it would be more convenient to have the rich text field rendered
-to html - just as you would when displaying the field in a Django template.
+to html - just as you get when displaying the field in a Django template.
 Fortunately, we can reuse the richtext filter to do exactly that!
 
 ### Converting Individual RichText Fields
 
-On option is to create a custom serializer and use that for individual fields.
+One option is to create a custom serializer and use that for individual fields.
 Place this code wherever you have other utility methods.
 
 ```python
@@ -99,7 +99,7 @@ class RenderedRichTextField(Field):
 ```
 
 Then in your page models, use this filter when you add RichText fields to the
-page's API representation: 
+page's API representation:
 
 ```python
 class HomePage(Page):
@@ -107,9 +107,121 @@ class HomePage(Page):
 
     api_fields = [APIField('intro', serializer=RenderedRichTextField())]
 ```
+Now the same intro example from above renders as:
+
+```html
+"value": "<p>This is a test. Same url, in a paragraph in a StreamField. If we only customize per field, <a href=\"http://localhost/foo\">this</a> will still have linktype in the API output.</p><p>Image inside a RichText field in side a StreamField:</p><img alt=\"Half a dozen men holding a shiney blump-like balloon by lines\" class=\"richtext-image left\" height=\"369\" src=\"/media/images/balloon-tracking-1961.width-500.png\" width=\"498\"/>"
+```
 
 This works fine BUT it does not allow you to run the richtext filter on RichText
-fields that are port of a StreamField. If you don't have any RichText fields
+blocks that are port of a StreamField. If you don't have any RichText blocks
 inside StreamFields, this may be fine. But otherwise, the inconsistency will
-cause problems. 
+cause problems.
 
+A better method is probably this second one - which overrides the API
+representation of all RichTextFields and RichTextBlocks.
+
+### Converting All RichText Fields
+
+If you want **all** RichTextFields to return rendered HTML, you will need to
+customize the representation for RichTextFields and RichTextBlock by overriding
+the methods used to serialize their content.
+
+For RichTextBlocks, we need to define a custom version of
+`get_api_representation` and reopen the RichTextBlock class to insert this into
+it. 
+
+```python
+from wagtail.core.blocks import RichTextBlock
+from wagtail.core.templatetags.wagtailcore_tags import richtext
+
+def rendered_api_representation(self, value, context=None):
+    '''
+    The default API representation for RichTextBlocks is the source as stored
+    in the database. But we want to render the html as we would in our 
+    Django templates so we apply the same filter here.
+    '''
+    return richtext(value.source)
+
+# Now insert this new method where it will override the original versions
+RichTextBlock.get_api_representation = rendered_api_representation
+```
+
+When we overrode our individual RichTextFields in the first section, we defined
+a `to_representation` method on in our custom class. So the first thing I tried
+was assigning `rendered_api_representation` as RichTextField.to_representation -
+but nothing happened. Then I looked more closely at the code above - it is
+inheriting from `rest_framework.fields.Field` NOT
+`wagtail.core.fields.RichTextField`. And in the block, we are running the filter
+on `value.source`; but in the custom serializer field, we are running the filter
+on `value`. 
+
+I am pretty sure we don't want to override `to_representation` for all DRF
+Fields, so we need to figure out what serializer Field subclass Wagtail is using
+when serializing RichTextFields. Looking at `wagtail.api.serializers`, I don't
+see a specific RichTextField. But I do see some interesting looking setup code
+in the `BaseSerializer` class. Wagtail's BaseSerializer inherits from DRF's
+ModelSerializer and the first thing it does is update a
+`serializer_field_mapping`. I wonder if we could slip our custom render class in
+there? Looks like yes.
+
+```python
+# imports for things are going to patch
+from wagtail.api.v2.serializers import BaseSerializer
+
+# normal imports needed so we can use the objects or methods in our patches
+from wagtail.core.templatetags.wagtailcore_tags import richtext
+from rest_framework.fields import CharField
+from wagtail.core import fields as wagtailcore_fields
+
+
+class RichTextField(CharField):
+    """
+    Create a custom DRF field that runs the richtext filter before adding data in the API output.
+
+    Note: this will produce relative for pageslinks
+    """
+    def to_representation(self, value):
+        return richtext(value)
+
+
+BaseSerializer.serializer_field_mapping.update({
+    wagtailcore_fields.RichTextField: RichTextField,
+})
+```
+
+You will notice that I changed some of my naming to more closely match the
+serializer fields I see in `wagtail/api/v2/serializers.py`. I am not a big fan
+of giving the model classes and the serializer class the same name because I
+think it makes it hard to tell which kind of object you have. You will see in
+the mapping, we needed to specify the module name for the model class to avoid
+it clashing with the serializer field class of the same name. But the matching
+names is how DRF does things so it makes our code more consistent if we do too.
+
+I also decided to inherit from the CharField serializer because Wagtail stores
+rich text fields in a TextField and the [default
+mapping](https://github.com/encode/django-rest-framework/blob/d635bc9c71b6cf84d137a68610ae2e628f8b62b3/rest_framework/serializers.py#L876)
+for model TextFields is to use the CharField serializer. With both the overrides
+in place, all our rich text fields are converted to HTML in our pages api.
+
+*Please note*: the urls we get from the richtext filter are absolute paths
+*without* the domain name: `src=\"/media/images/BoxerDay.width-800.jpg\"`. That
+is consistent with the download url we get from the images API (below). But I am
+not exactly sure how this plays out if your API consumer is on a different
+domain than the CMS. It is probably a good thing but implies that your API
+client will need asset routes using the same sort of path structure as the CMS.
+
+```json
+{
+    "id": 1,
+    "meta": {
+        "type": "home.CustomImage",
+        "detail_url": "http://localhost:8787/api/v2/images/1/",
+        "tags": [],
+        "download_url": "/media/original_images/BoxerDay.jpg"
+    },
+    "title": "BoxerDay",
+    "width": 1242,
+    "height": 792
+}
+```
