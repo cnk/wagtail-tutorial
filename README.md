@@ -66,6 +66,12 @@ collection at the time the file is first saved - and is only updated to the
 correct collection when the full form is saved a few lines later. This [pull
 request](https://github.com/wagtail/wagtail/pull/6717) should fix the issue.
 
+*3/9/2021* I added a custom document model so I could demonstrate this issue
+should also affect Documents with required fields. And discovered that as of
+wagtail 2.12.3,  I can't reproduce the problem I was having with either model -
+images or documents. I don't see an obvious reason why the commits since 2.12.0
+should have fixed this. But given that it has gone away, I closed my PR.
+
 
 ## Round 2: Convert RichText to html in APIv2
 

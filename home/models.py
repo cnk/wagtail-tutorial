@@ -23,7 +23,6 @@ class CustomImage(AbstractImage):
         'alt',
     )
 
-    # Uncomment this when we need to demonstrate broken behavior moving images from UploadedImages
     def get_upload_to(self, filename):
         # This function gets called by wagtail.images.models.get_upload_to().
         original_path = super().get_upload_to(filename)
@@ -52,7 +51,6 @@ class CustomDocument(AbstractDocument):
 
     admin_form_fields = Document.admin_form_fields + ('description', )
 
-    # Uncomment this when we need to demonstrate broken behavior moving documents from UploadedDocuments
     def get_upload_to(self, filename):
         # This function gets called by wagtail.documents.models.get_upload_to().
         original_path = super().get_upload_to(filename)
