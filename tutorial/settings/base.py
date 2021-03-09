@@ -167,3 +167,4 @@ WAGTAIL_SITE_NAME = "tutorial"
 BASE_URL = 'http://example.com'
 
 WAGTAILIMAGES_IMAGE_MODEL = 'home.CustomImage'
+WAGTAILDOCS_DOCUMENT_MODEL = 'home.CustomDocument'

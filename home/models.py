@@ -5,6 +5,7 @@ from wagtail.core import blocks
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 from wagtail.documents.blocks import DocumentChooserBlock
+from wagtail.documents.models import AbstractDocument, Document
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.images.models import Image, AbstractImage, AbstractRendition
 
@@ -23,13 +24,12 @@ class CustomImage(AbstractImage):
     )
 
     # Uncomment this when we need to demonstrate broken behavior moving images from UploadedImages
-    #
-    # def get_upload_to(self, filename):
-    #     # This function gets called by wagtail.images.models.get_upload_to().
-    #     original_path = super().get_upload_to(filename)
-    #     # Put the image into a folder named for this image's collection.
-    #     amended_path = PurePath(get_collection_path(self.collection), original_path)
-    #     return str(amended_path)
+    def get_upload_to(self, filename):
+        # This function gets called by wagtail.images.models.get_upload_to().
+        original_path = super().get_upload_to(filename)
+        # Put the image into a folder named for this image's collection.
+        amended_path = PurePath(get_collection_path(self.collection), original_path)
+        return str(amended_path)
 
     @property
     def default_alt_text(self):
@@ -45,6 +45,20 @@ class CustomRendition(AbstractRendition):
         unique_together = (
             ('image', 'filter_spec', 'focal_point_key'),
         )
+
+
+class CustomDocument(AbstractDocument):
+    description = models.CharField(max_length=1024)
+
+    admin_form_fields = Document.admin_form_fields + ('description', )
+
+    # Uncomment this when we need to demonstrate broken behavior moving documents from UploadedDocuments
+    def get_upload_to(self, filename):
+        # This function gets called by wagtail.documents.models.get_upload_to().
+        original_path = super().get_upload_to(filename)
+        # Put the document into a folder named for this documents's collection.
+        amended_path = PurePath(get_collection_path(self.collection), original_path)
+        return str(amended_path)
 
 
 class HomePage(Page):
