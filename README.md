@@ -135,7 +135,7 @@ the methods used to serialize their content.
 
 For RichTextBlocks, we need to define a custom version of
 `get_api_representation` and reopen the RichTextBlock class to insert this into
-it. 
+it.
 
 ```python
 from wagtail.core.blocks import RichTextBlock
@@ -144,7 +144,7 @@ from wagtail.core.templatetags.wagtailcore_tags import richtext
 def rendered_api_representation(self, value, context=None):
     '''
     The default API representation for RichTextBlocks is the source as stored
-    in the database. But we want to render the html as we would in our 
+    in the database. But we want to render the html as we would in our
     Django templates so we apply the same filter here.
     '''
     return richtext(value.source)
@@ -160,7 +160,7 @@ but nothing happened. Then I looked more closely at the code above - it is
 inheriting from `rest_framework.fields.Field` NOT
 `wagtail.core.fields.RichTextField`. And in the block, we are running the filter
 on `value.source`; but in the custom serializer field, we are running the filter
-on `value`. 
+on `value`.
 
 I am pretty sure we don't want to override `to_representation` for all DRF
 Fields, so we need to figure out what serializer Field subclass Wagtail is using
@@ -231,3 +231,31 @@ client will need asset routes using the same sort of path structure as the CMS.
     "height": 792
 }
 ```
+
+## Round 3: Errors not displayed for deeply nested blocks
+
+This latest version demonstrates an issue I found after upgrading our site to
+Wagtail 2.13.
+
+We have a number of UI components that are made up of similar sets of fields.
+For example in nearly all our image carousels, you can use an image OR embed a
+video. You also typically can add a caption, alt text, and the photo credit for
+each image. So we created a reusable MixedMediaBlock and each of our carousels
+have a ListBlock of MixedMediaBlocks as their main component.
+
+After upgrading to Wagtail 2.13, we have had reports of pages refusing to save
+saying there is a validation error on the page - but when you look through the
+page form, none of the fields are highlighted in red. I had some trouble
+reproducing this because if the block with the error in it is the first block in
+the list, the validation error displays just fine. In fact in our site, if the
+first MixedMediaBlock has an error, not only will it's errors display, but
+errors in MixedMediaBlocks later in the list will also display. When testing
+this against the main branch of Wagtail, errors later in the listBlock never
+displayed.
+
+Our MixedMediaBlock is a little complicated but I observed the same behavior in
+a simpler block with a similar structure - a StructBlock containing a ListBlock
+of other StructBlocks. I transferred that example to this project which is based
+on the example from the Wagtail docs. See `home/blocks.py` for the block
+definitions and `home/models.py` for those blocks used as part of the HomePage
+body StreamField.

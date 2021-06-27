@@ -1,0 +1,30 @@
+{% load tutorial_tags static %}
+
+{% get_unique_id as block_id %}
+<div class="stats-block">
+  {% if self.title %}
+    <{{ self.title_style }} class="stats-block__title {% if self.title_centered %}stats-block__title--centered{% endif %}">
+      {{ self.title | custom_bleach:"i,br,sup,sub" }}
+    </{{ self.title_style }}>
+  {% endif %}
+  <div id="{{ block_id }}" class="stats-block__content carousel slide {{ extra_classes }} w-100" data-ride="false">
+    <div class="d-flex flex-sm-row justify-content-sm-between carousel-inner w-100" role="listbox">
+    {% for stat in self.stats %}
+      <div class="stats-block__content__stat carousel-item{% if forloop.counter0 == 0 %} active{% endif %}">
+        <h2 class="stats-block__content__stat__stat text-center">
+          {{ stat.stat | striptags }}
+        </h2>
+        <p class="stats-block__content__stat__desc text-center">
+          {{ stat.desc | custom_bleach:"a,br,b,i,em,strong,sub,sup" }}
+        </p>
+      </div>
+    {% endfor %}
+    </div>
+    <a class="left carousel-control-prev d-flex justify-content-start stats-block__carousel-control stats-block__carousel-control--prev" href="#{{ block_id }}" role="button" data-slide="prev">
+      <img class="stats-block__carousel-control__icon" src="{% static 'airspace/img/icon-chevron-left.png' %}" alt="prev">
+    </a>
+    <a class="right carousel-control-next d-flex justify-content-end stats-block__carousel-control stats-block__carousel-control--next" href="#{{ block_id }}" role="button" data-slide="next">
+      <img class="stats-block__carousel-control__icon" src="{% static 'airspace/img/icon-chevron-right.png' %}" alt="next">
+    </a>
+  </div>
+</div>

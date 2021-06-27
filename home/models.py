@@ -9,6 +9,7 @@ from wagtail.documents.models import AbstractDocument, Document
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.images.models import Image, AbstractImage, AbstractRendition
 
+from .blocks import StatsBlock
 from .utils import get_collection_path
 
 
@@ -65,7 +66,8 @@ class HomePage(Page):
         ('heading', blocks.CharBlock(form_classname="full title")),
         ('paragraph', blocks.RichTextBlock()),
         ('image', ImageChooserBlock()),
-        ('document', DocumentChooserBlock())
+        ('document', DocumentChooserBlock()),
+        ('stats', StatsBlock()),
     ])
 
     content_panels = Page.content_panels + [

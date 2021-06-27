@@ -3,3 +3,4 @@ wagtail>=2.13,<2.14
 django-extensions
 dj-database-url
 psycopg2>=2.7,<3.0
+django-bleach
