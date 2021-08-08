@@ -259,3 +259,9 @@ of other StructBlocks. I transferred that example to this project which is based
 on the example from the Wagtail docs. See `home/blocks.py` for the block
 definitions and `home/models.py` for those blocks used as part of the HomePage
 body StreamField.
+
+The issue where this was discussed is [Nested StructBlocks in a
+StreamBlock are not showing the ValidationError in the field](
+https://github.com/wagtail/wagtail/issues/7248) and it was resolved in
+[Correctly handle nulls in ListBlock validation errors](
+https://github.com/wagtail/wagtail/pull/7295)
