@@ -5,3 +5,5 @@ django-bleach
 dj-database-url
 psycopg2>=2.7,<3.0
 mysqlclient>=2.0,<2.1
+# for running dumpdata and loaddata with --format yaml
+pyyaml
