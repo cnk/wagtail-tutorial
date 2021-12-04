@@ -65,6 +65,7 @@ class HomePage(Page):
     body = StreamField([
         ('heading', blocks.CharBlock(form_classname="full title")),
         ('paragraph', blocks.RichTextBlock()),
+        ('hallo_paragraph', blocks.RichTextBlock(editor='legacy')),
         ('image', ImageChooserBlock()),
         ('document', DocumentChooserBlock()),
         ('stats', StatsBlock()),

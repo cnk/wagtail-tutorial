@@ -168,3 +168,12 @@ BASE_URL = 'http://example.com'
 
 WAGTAILIMAGES_IMAGE_MODEL = 'home.CustomImage'
 WAGTAILDOCS_DOCUMENT_MODEL = 'home.CustomDocument'
+
+WAGTAILADMIN_RICH_TEXT_EDITORS = {
+    'default': {
+        'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
+    },
+    'legacy': {
+        'WIDGET': 'wagtail.admin.rich_text.HalloRichTextArea',
+    }
+}
