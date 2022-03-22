@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'home',
     'search',
     'wagtail_patches',
+    'wagtail_hallo',
 
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
@@ -174,6 +175,6 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
         'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
     },
     'legacy': {
-        'WIDGET': 'wagtail.admin.rich_text.HalloRichTextArea',
+        'WIDGET': 'wagtail_hallo.hallo.HalloRichTextArea',
     }
 }
