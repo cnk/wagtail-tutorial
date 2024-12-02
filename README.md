@@ -1,76 +1,54 @@
 # Site from the Wagtail tutorial
 
-This repository exists so I can use it while working on developing the
-Wagtail CMS platform. When reporting issues, it is often helpful to have a
-minimal site that demonstrates the issue.
+This repository exists so I can use it while working on developing the Wagtail
+CMS platform. When reporting issues, it is often helpful to have a minimal site
+that demonstrates the issue. The core team uses bakerydemo for this but
+sometimes I want to experiment with ideas that I don't think need to be included
+in bakerydemo. So I built this to project based on an early version of Wagtail's
+getting started tutorial.
 
-## Round 1: Image upload issue
+In theory you should be able to run this project in a docker container using the
+included Dockerfile and either a SQLite database inside the container or with
+Postgres or MySQL provided by other containers. I haven't used the current
+Dockerfile in a stand alone way - I suspect I just copied it from whatever
+bakerydemo had at the time I started this. I have forked
+[docker-wagtail-develop](https://github.com/cnk/docker-wagtail-develop/) and
+usually run this from the docker-compose.yml in that project with the
+Docker.tutorial file there.
 
-This version (b4ddfff) demonstrates an issue I found while we were upgrading our
-site to 2.12. The issue first appeared during our transition from Wagtail 2.10
-to 2.11 and is only trigged in very specific circumstances.
+## Round 3: Errors not displayed for deeply nested blocks
 
-The error appears when you need to access the collection object before saving an
-image. We want to save data from different collections in different folders in
-our S3 bucket - and we want the paths named for the collections. On our custom
-image model, we overrode `upload_to` as follows:
+This latest version demonstrates an issue I found after upgrading our site to
+Wagtail 2.13.
 
-    def get_upload_to(self, filename):
-        # This function gets called by wagtail.images.models.get_upload_to().
-        original_path = super().get_upload_to(filename)
-        # Put the image into a folder named for this image's collection.
-        amended_path = PurePath(get_collection_path(self.collection), original_path)
-        return str(amended_path)
+We have a number of UI components that are made up of similar sets of fields.
+For example in nearly all our image carousels, you can use an image OR embed a
+video. You also typically can add a caption, alt text, and the photo credit for
+each image. So we created a reusable MixedMediaBlock and each of our carousels
+have a ListBlock of MixedMediaBlocks as their main component.
 
-    def get_collection_path(collection):
-        collection_names = list(collection.get_ancestors(inclusive=True)
-                                          .exclude(name='Root')
-                                          .values_list('name', flat=True))
-        # Rename the default site's folder to 'root', for consistency
-        if collection_names[0] == Site.objects.get(is_default_site=True).hostname:
-            collection_names[0] = 'root'
-        # Convert the list of names into a filesystem path string.
-        return str(PurePath(*collection_names))
+After upgrading to Wagtail 2.13, we have had reports of pages refusing to save
+saying there is a validation error on the page - but when you look through the
+page form, none of the fields are highlighted in red. I had some trouble
+reproducing this because if the block with the error in it is the first block in
+the list, the validation error displays just fine. In fact in our site, if the
+first MixedMediaBlock has an error, not only will it's errors display, but
+errors in MixedMediaBlocks later in the list will also display. When testing
+this against the main branch of Wagtail, errors later in the listBlock never
+displayed.
 
-If the user doing the uploading has access to multiple collections, there is
-a collection field in the form to allow you to choose which collection the
-image belongs to. However, if the user is only allowed to add/edit items in one
-collection, BaseCollectionMemberForm deletes the collection field from the form.
+Our MixedMediaBlock is a little complicated but I observed the same behavior in
+a simpler block with a similar structure - a StructBlock containing a ListBlock
+of other StructBlocks. I transferred that example to this project which is based
+on the example from the Wagtail docs. See `home/blocks.py` for the block
+definitions and `home/models.py` for those blocks used as part of the HomePage
+body StreamField.
 
-When the user uploads an image using the chooser in the rich text editor, the
-upload goes through the `chooser_upload` view in
-`wagtail/images/views/chooser.py`. That method calls form.save() and, if there
-is only one possible collection, sets the collection id on the image before
-calling `super()` to do the rest of the form saving - such as actually saving
-the uploaded file to its final location.
-
-When the user uploads an image from the multiple file upload interface you get
-when you click the 'Add' button on `/admin/images/` the upload takes a different
-path. It uses the class-based views in `wagtail/images/views/multiple.py`. In
-our site, we have a required 'alt' field, so the image uploaded from the drag
-and drop interface is not valid and gets saved in the UploadedImage model and
-the user is presented with the form instantiated by
-`CreateFromUploadedImageView`. That form also inherits from
-BaseCollectionMemberForm so does not have a collection field if the user only
-has access to a single collection. And if we remove our custom `upload_to`
-method, the image created by that form ends up the correct collection - even
-though print statements inside CreateFromUploadedImageView's save_object method
-show the image originally belongs to the root collection and is only moved to
-the correct collection when the form is saved.
-
-The problem I am having is that the post method in CreateFromUploadedImageView
-(or more technically in the parent class CreateFromUploadView), calls
-`save_object` and the `save_object` method in CreateFromUploadedImageView saves
-the file BEFORE it saves the form. So the image collection is set to the root
-collection at the time the file is first saved - and is only updated to the
-correct collection when the full form is saved a few lines later. This [pull
-request](https://github.com/wagtail/wagtail/pull/6717) should fix the issue.
-
-*3/9/2021* I added a custom document model so I could demonstrate this issue
-should also affect Documents with required fields. And discovered that as of
-wagtail 2.12.3,  I can't reproduce the problem I was having with either model -
-images or documents. I don't see an obvious reason why the commits since 2.12.0
-should have fixed this. But given that it has gone away, I closed my PR.
+The issue where this was discussed is [Nested StructBlocks in a
+StreamBlock are not showing the ValidationError in the field](
+https://github.com/wagtail/wagtail/issues/7248) and it was resolved in
+[Correctly handle nulls in ListBlock validation errors](
+https://github.com/wagtail/wagtail/pull/7295)
 
 
 ## Round 2: Convert RichText to html in APIv2
@@ -232,36 +210,70 @@ client will need asset routes using the same sort of path structure as the CMS.
 }
 ```
 
-## Round 3: Errors not displayed for deeply nested blocks
+## Round 1: Image upload issue
 
-This latest version demonstrates an issue I found after upgrading our site to
-Wagtail 2.13.
+This version (b4ddfff) demonstrates an issue I found while we were upgrading our
+site to 2.12. The issue first appeared during our transition from Wagtail 2.10
+to 2.11 and is only trigged in very specific circumstances.
 
-We have a number of UI components that are made up of similar sets of fields.
-For example in nearly all our image carousels, you can use an image OR embed a
-video. You also typically can add a caption, alt text, and the photo credit for
-each image. So we created a reusable MixedMediaBlock and each of our carousels
-have a ListBlock of MixedMediaBlocks as their main component.
+The error appears when you need to access the collection object before saving an
+image. We want to save data from different collections in different folders in
+our S3 bucket - and we want the paths named for the collections. On our custom
+image model, we overrode `upload_to` as follows:
 
-After upgrading to Wagtail 2.13, we have had reports of pages refusing to save
-saying there is a validation error on the page - but when you look through the
-page form, none of the fields are highlighted in red. I had some trouble
-reproducing this because if the block with the error in it is the first block in
-the list, the validation error displays just fine. In fact in our site, if the
-first MixedMediaBlock has an error, not only will it's errors display, but
-errors in MixedMediaBlocks later in the list will also display. When testing
-this against the main branch of Wagtail, errors later in the listBlock never
-displayed.
+    def get_upload_to(self, filename):
+        # This function gets called by wagtail.images.models.get_upload_to().
+        original_path = super().get_upload_to(filename)
+        # Put the image into a folder named for this image's collection.
+        amended_path = PurePath(get_collection_path(self.collection), original_path)
+        return str(amended_path)
 
-Our MixedMediaBlock is a little complicated but I observed the same behavior in
-a simpler block with a similar structure - a StructBlock containing a ListBlock
-of other StructBlocks. I transferred that example to this project which is based
-on the example from the Wagtail docs. See `home/blocks.py` for the block
-definitions and `home/models.py` for those blocks used as part of the HomePage
-body StreamField.
+    def get_collection_path(collection):
+        collection_names = list(collection.get_ancestors(inclusive=True)
+                                          .exclude(name='Root')
+                                          .values_list('name', flat=True))
+        # Rename the default site's folder to 'root', for consistency
+        if collection_names[0] == Site.objects.get(is_default_site=True).hostname:
+            collection_names[0] = 'root'
+        # Convert the list of names into a filesystem path string.
+        return str(PurePath(*collection_names))
 
-The issue where this was discussed is [Nested StructBlocks in a
-StreamBlock are not showing the ValidationError in the field](
-https://github.com/wagtail/wagtail/issues/7248) and it was resolved in
-[Correctly handle nulls in ListBlock validation errors](
-https://github.com/wagtail/wagtail/pull/7295)
+If the user doing the uploading has access to multiple collections, there is
+a collection field in the form to allow you to choose which collection the
+image belongs to. However, if the user is only allowed to add/edit items in one
+collection, BaseCollectionMemberForm deletes the collection field from the form.
+
+When the user uploads an image using the chooser in the rich text editor, the
+upload goes through the `chooser_upload` view in
+`wagtail/images/views/chooser.py`. That method calls form.save() and, if there
+is only one possible collection, sets the collection id on the image before
+calling `super()` to do the rest of the form saving - such as actually saving
+the uploaded file to its final location.
+
+When the user uploads an image from the multiple file upload interface you get
+when you click the 'Add' button on `/admin/images/` the upload takes a different
+path. It uses the class-based views in `wagtail/images/views/multiple.py`. In
+our site, we have a required 'alt' field, so the image uploaded from the drag
+and drop interface is not valid and gets saved in the UploadedImage model and
+the user is presented with the form instantiated by
+`CreateFromUploadedImageView`. That form also inherits from
+BaseCollectionMemberForm so does not have a collection field if the user only
+has access to a single collection. And if we remove our custom `upload_to`
+method, the image created by that form ends up the correct collection - even
+though print statements inside CreateFromUploadedImageView's save_object method
+show the image originally belongs to the root collection and is only moved to
+the correct collection when the form is saved.
+
+The problem I am having is that the post method in CreateFromUploadedImageView
+(or more technically in the parent class CreateFromUploadView), calls
+`save_object` and the `save_object` method in CreateFromUploadedImageView saves
+the file BEFORE it saves the form. So the image collection is set to the root
+collection at the time the file is first saved - and is only updated to the
+correct collection when the full form is saved a few lines later. This [pull
+request](https://github.com/wagtail/wagtail/pull/6717) should fix the issue.
+
+*3/9/2021* I added a custom document model so I could demonstrate this issue
+should also affect Documents with required fields. And discovered that as of
+wagtail 2.12.3,  I can't reproduce the problem I was having with either model -
+images or documents. I don't see an obvious reason why the commits since 2.12.0
+should have fixed this. But given that it has gone away, I closed my PR.

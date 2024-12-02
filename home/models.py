@@ -1,4 +1,3 @@
-from pathlib import PurePath
 from django.db import models
 from wagtail.admin.edit_handlers import FieldPanel, StreamFieldPanel
 from wagtail.core import blocks
@@ -10,7 +9,6 @@ from wagtail.images.blocks import ImageChooserBlock
 from wagtail.images.models import Image, AbstractImage, AbstractRendition
 
 from .blocks import StatsBlock
-from .utils import get_collection_path
 
 
 class CustomImage(AbstractImage):
@@ -23,13 +21,6 @@ class CustomImage(AbstractImage):
         'caption',
         'alt',
     )
-
-    def get_upload_to(self, filename):
-        # This function gets called by wagtail.images.models.get_upload_to().
-        original_path = super().get_upload_to(filename)
-        # Put the image into a folder named for this image's collection.
-        amended_path = PurePath(get_collection_path(self.collection), original_path)
-        return str(amended_path)
 
     @property
     def default_alt_text(self):
@@ -51,13 +42,6 @@ class CustomDocument(AbstractDocument):
     description = models.CharField(max_length=1024)
 
     admin_form_fields = Document.admin_form_fields + ('description', )
-
-    def get_upload_to(self, filename):
-        # This function gets called by wagtail.documents.models.get_upload_to().
-        original_path = super().get_upload_to(filename)
-        # Put the document into a folder named for this documents's collection.
-        amended_path = PurePath(get_collection_path(self.collection), original_path)
-        return str(amended_path)
 
 
 class HomePage(Page):
