@@ -1,2 +1,3 @@
 media/*
 .vscode/*
+*.sqlite3

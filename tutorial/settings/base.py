@@ -165,7 +165,7 @@ WAGTAIL_SITE_NAME = "tutorial"
 
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-BASE_URL = 'http://example.com'
+WAGTAILADMIN_BASE_URL = 'http://localhost:8787'
 
 WAGTAILIMAGES_IMAGE_MODEL = 'home.CustomImage'
 WAGTAILDOCS_DOCUMENT_MODEL = 'home.CustomDocument'
