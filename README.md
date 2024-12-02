@@ -13,8 +13,35 @@ Postgres or MySQL provided by other containers. I haven't used the current
 Dockerfile in a stand alone way - I suspect I just copied it from whatever
 bakerydemo had at the time I started this. I have forked
 [docker-wagtail-develop](https://github.com/cnk/docker-wagtail-develop/) and
-usually run this from the docker-compose.yml in that project with the
-Docker.tutorial file there.
+usually run this from the compose.yml in that project with the Docker.tutorial
+file there.
+
+## Round 4: Testing wagtail-hallo with various versions of Wagtail
+
+When Wagtail finally dropped their hallo.js rich text editor, LB kindly
+extracted the code into a separate repository so those of use who could not move
+away from hallo would have a way to install it in newer versions of Wagtail. I
+have done a terrible job maintaining that project but am now trying to create /
+recreate versions of the project that run with various versions of Wagtail. This
+project has a HomePage model with a StreamField containing both kinds of rich
+text field. No sane project would do that but it makes it easier for me to
+compare features between editors.
+
+So I can test different combinations of Wagtail and wagtail-hallo, I cloned
+wagtail-hallo into the libs directory of docker-wagtail-develop and am using the
+following code in the Dockerfile.tutorial in my fork of
+[docker-wagtail-develop](https://github.com/cnk/docker-wagtail-develop/) to
+mount that package into this project.
+
+```python
+# Install wagtail-hallo from the host. This folder will be overwritten by a volume
+# mount during run time (so that code changes show up immediately), but it also
+# needs to be copied into the image now so that wagtail-hallo can be pip install'd.
+
+COPY ./libs/wagtail-hallo /code/wagtail-hallo/
+RUN cd /code/wagtail-hallo/ \
+    && pip install -e .
+```
 
 ## Round 3: Errors not displayed for deeply nested blocks
 

@@ -173,6 +173,12 @@ WAGTAILDOCS_DOCUMENT_MODEL = 'home.CustomDocument'
 WAGTAILADMIN_RICH_TEXT_EDITORS = {
     'default': {
         'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
+        'OPTIONS': {
+            'features': [
+                'bold', 'italic', 'h2', 'h3', 'h4', 'ol', 'ul', 'hr',
+                'embed', 'link', 'document-link', 'image', 'code', 'superscript', 'subscript'
+            ],
+        }
     },
     'legacy': {
         'WIDGET': 'wagtail_hallo.hallo.HalloRichTextArea',
