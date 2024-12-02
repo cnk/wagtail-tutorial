@@ -1,5 +1,5 @@
 from django.utils.html import escape
-from wagtail.core import blocks
+from wagtail import blocks
 
 
 class StatBlock(blocks.StructBlock):

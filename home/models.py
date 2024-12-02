@@ -1,8 +1,8 @@
 from django.db import models
-from wagtail.admin.edit_handlers import FieldPanel, StreamFieldPanel
-from wagtail.core import blocks
-from wagtail.core.fields import RichTextField, StreamField
-from wagtail.core.models import Page
+from wagtail.admin.panels import FieldPanel
+from wagtail import blocks
+from wagtail.fields import RichTextField, StreamField
+from wagtail.models import Page
 from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.documents.models import AbstractDocument, Document
 from wagtail.images.blocks import ImageChooserBlock
@@ -46,18 +46,21 @@ class CustomDocument(AbstractDocument):
 
 class HomePage(Page):
     intro = RichTextField(blank=True)
-    body = StreamField([
-        ('heading', blocks.CharBlock(form_classname="full title")),
-        ('paragraph', blocks.RichTextBlock()),
-        ('hallo_paragraph', blocks.RichTextBlock(editor='legacy')),
-        ('image', ImageChooserBlock()),
-        ('document', DocumentChooserBlock()),
-        ('stats', StatsBlock()),
-    ])
+    body = StreamField(
+        [
+            ('heading', blocks.CharBlock(form_classname="full title")),
+            ('paragraph', blocks.RichTextBlock()),
+            ('hallo_paragraph', blocks.RichTextBlock(editor='legacy')),
+            ('image', ImageChooserBlock()),
+            ('document', DocumentChooserBlock()),
+            ('stats', StatsBlock()),
+        ],
+        use_json_field=True,
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel('intro', classname="full"),
-        StreamFieldPanel('body', classname="full"),
+        FieldPanel('body', classname="full"),
     ]
 
     api_fields = ['intro', 'body', ]

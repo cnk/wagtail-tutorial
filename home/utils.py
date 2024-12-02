@@ -1,5 +1,5 @@
 from pathlib import PurePath
-from wagtail.core.models import Site
+from wagtail.models import Site
 
 
 def get_collection_path(collection):

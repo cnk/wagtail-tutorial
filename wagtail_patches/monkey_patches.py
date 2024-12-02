@@ -1,11 +1,11 @@
 # imports for things are going to patch
-from wagtail.core.blocks import RichTextBlock
+from wagtail.blocks import RichTextBlock
 from wagtail.api.v2.serializers import BaseSerializer
 
 # normal imports needed so we can use the objects or methods in our patches
-from wagtail.core.templatetags.wagtailcore_tags import richtext
+from wagtail.templatetags.wagtailcore_tags import richtext
 from rest_framework.fields import CharField
-from wagtail.core import fields as wagtailcore_fields
+from wagtail import fields as wagtailcore_fields
 
 
 def rendered_api_representation(self, value, context=None):
