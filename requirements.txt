@@ -1,5 +1,5 @@
 Django>=3.2,<4.0
-wagtail<6.0
+wagtail<6.1
 wagtail-hallo
 django-extensions
 django-bleach
