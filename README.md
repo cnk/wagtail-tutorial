@@ -30,8 +30,8 @@ compare features between editors.
 So I can test different combinations of Wagtail and wagtail-hallo, I cloned
 wagtail-hallo into the libs directory of docker-wagtail-develop and am using the
 following code in the Dockerfile.tutorial in my fork of
-[docker-wagtail-develop](https://github.com/cnk/docker-wagtail-develop/) to
-mount that package into this project.
+[docker-wagtail-develop](https://github.com/cnk/docker-wagtail-develop/) set up
+my Python env to expect local installs of wagtail and wagtail-hallo.
 
 ```python
 # Install wagtail-hallo from the host. This folder will be overwritten by a volume
@@ -41,6 +41,15 @@ mount that package into this project.
 COPY ./libs/wagtail-hallo /code/wagtail-hallo/
 RUN cd /code/wagtail-hallo/ \
     && pip install -e .
+```
+
+And then my custom `compose.yml` file mounts those 2 libraries into my tutorial
+container as volumes:
+
+```yaml
+    volumes:
+      - ./libs/wagtail-hallo:/code/wagtail-hallo:delegated,rw
+      - ./tutorial:/code/tutorial:delegated,rw
 ```
 
 ## Round 3: Errors not displayed for deeply nested blocks
