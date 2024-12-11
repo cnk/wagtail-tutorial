@@ -168,6 +168,8 @@ WAGTAIL_SITE_NAME = "tutorial"
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
 WAGTAILADMIN_BASE_URL = 'http://localhost:8787'
 
+WAGTAIL_EDITING_SESSION_PING_INTERVAL = 0
+
 WAGTAILIMAGES_IMAGE_MODEL = 'home.CustomImage'
 WAGTAILDOCS_DOCUMENT_MODEL = 'home.CustomDocument'
 
